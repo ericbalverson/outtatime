@@ -9,6 +9,15 @@ import { Button, Modal, inputClass } from "./ui";
 
 const LONG_RUN_MS = 10 * HOUR;
 
+// Fit-to-screen sizes, in container units of the tile (cqw = 1% of width, cqh = 1% of height).
+const FIT = {
+  name: "text-[length:clamp(0.75rem,min(7cqw,12cqh),1.75rem)] truncate",
+  clock: "text-[length:min(17cqw,30cqh)] leading-none",
+  meta: "text-[length:clamp(0.625rem,min(4cqw,7cqh),1rem)]",
+  button: "h-[max(2rem,22cqh)] text-[length:clamp(0.75rem,min(6cqw,10cqh),1.5rem)]",
+  icon: "h-[0.85em] w-[0.85em]",
+};
+
 export function ProjectTile({
   tile,
   totalMs,
@@ -21,6 +30,7 @@ export function ProjectTile({
   onEntries,
   onMove,
   onError,
+  fit = false,
 }: {
   tile: TileData;
   totalMs: number;
@@ -33,6 +43,8 @@ export function ProjectTile({
   onEntries: () => void;
   onMove: (dir: -1 | 1) => void;
   onError: (e?: string) => void;
+  /** Fill the grid cell and scale contents to it. */
+  fit?: boolean;
 }) {
   const running = !!tile.runningSince;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -52,14 +64,18 @@ export function ProjectTile({
 
   return (
     <article
-      className={`group relative flex flex-col rounded-2xl border bg-zinc-900/70 p-5 transition ${
+      className={`group relative flex flex-col rounded-2xl border bg-zinc-900/70 transition ${
+        fit ? "h-full min-h-0 p-3 [container-type:size] sm:p-4" : "p-5"
+      } ${
         running ? "border-transparent" : "border-zinc-800 hover:border-zinc-700"
       }`}
       style={running ? { boxShadow: `0 0 0 1.5px ${tile.color}, 0 0 32px -8px ${tile.color}` } : undefined}
     >
       <div className="flex items-start gap-3">
-        <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: tile.color }} />
-        <h3 className="min-w-0 flex-1 break-words font-medium text-zinc-100">{tile.name}</h3>
+        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${fit ? "mt-[0.4em] self-start" : "mt-1.5"}`} style={{ background: tile.color }} />
+        <h3 className={`min-w-0 flex-1 font-medium text-zinc-100 ${fit ? FIT.name : "break-words"}`} title={tile.name}>
+          {tile.name}
+        </h3>
         <div ref={menuRef} className="relative -mr-2 -mt-1">
           <button
             onClick={() => setMenuOpen((o) => !o)}
@@ -98,29 +114,37 @@ export function ProjectTile({
         </div>
       </div>
 
-      <div suppressHydrationWarning className="mt-4 font-mono text-4xl font-semibold text-zinc-50 tabular">
+      <div
+        suppressHydrationWarning
+        className={`font-mono font-semibold text-zinc-50 tabular ${fit ? `mt-auto ${FIT.clock}` : "mt-4 text-4xl"}`}
+      >
         {formatClock(totalMs)}
       </div>
-      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-400">
+      <div className={`mt-1 flex flex-wrap gap-x-4 gap-y-1 text-zinc-400 ${fit ? `overflow-hidden ${FIT.meta}` : "text-xs"}`}>
         <span suppressHydrationWarning>This week {formatHM(weekMs)}</span>
         <span suppressHydrationWarning>{share.toFixed(1)}% of total</span>
       </div>
 
-      {running && runMs > LONG_RUN_MS && (
-        <p className="mt-3 rounded-md bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-300">
-          Running for {formatHM(runMs)}. Forgot to stop? You can fix it under Time entries.
-        </p>
-      )}
+      {running && runMs > LONG_RUN_MS &&
+        (fit ? (
+          <p className={`mt-1 truncate text-amber-300 ${FIT.meta}`}>Running {formatHM(runMs)} — forgot to stop?</p>
+        ) : (
+          <p className="mt-3 rounded-md bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-300">
+            Running for {formatHM(runMs)}. Forgot to stop? You can fix it under Time entries.
+          </p>
+        ))}
 
       <button
         onClick={onToggle}
-        className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition active:scale-[0.99] ${
+        className={`flex w-full shrink-0 items-center justify-center gap-2 rounded-xl font-semibold transition active:scale-[0.99] ${
+          fit ? `mt-auto ${FIT.button}` : "mt-5 py-3 text-sm"
+        } ${
           running ? "bg-rose-500/15 text-rose-300 hover:bg-rose-500/25" : "bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25"
         }`}
       >
         {running ? (
           <>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className={fit ? FIT.icon : undefined}>
               <rect x="5" y="5" width="14" height="14" rx="2" />
             </svg>
             Stop
@@ -130,7 +154,7 @@ export function ProjectTile({
           </>
         ) : (
           <>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className={fit ? FIT.icon : undefined}>
               <path d="M7 4.5v15l13-7.5z" />
             </svg>
             Start
