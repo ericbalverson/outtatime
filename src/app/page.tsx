@@ -29,6 +29,16 @@ export default async function Home() {
             </button>
           </form>
         )}
+
+        <p className="mt-8 text-xs text-zinc-500">
+          <a href="/privacy" className="hover:text-zinc-300">
+            Privacy Policy
+          </a>
+          <span className="mx-2">·</span>
+          <a href="/terms" className="hover:text-zinc-300">
+            Terms of Service
+          </a>
+        </p>
       </div>
     </main>
   );
